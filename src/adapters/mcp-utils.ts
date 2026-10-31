@@ -106,26 +106,28 @@ export const MAX_MCP_TIMEOUT_MS = 300_000;
 export const MIN_HONORED_MCP_TIMEOUT_MS = 1_000;
 
 /**
- * Most-recent stable MCP protocol revision emitted into generated client
- * config when the operator does not pin one via
+ * Legacy MCP compatibility default emitted as an advisory marker in generated
+ * Claude Code config unless overridden in
  * `.hatch3r/hatch.json::mcp.protocolVersion`. F17.2.3 (Cycle 10, D17, P3).
  *
- * The 2026-07-28 release candidate (largest revision since launch) removes
- * the `initialize`/`initialized` handshake, drops protocol-level sessions,
- * moves Tasks to an extension, and changes the missing-resource JSON-RPC
- * code from -32002 to the standard -32602; it is tentatively GA in Q3 2026
- * (blog.modelcontextprotocol.io/posts/2026-07-28-release-candidate, accessed
- * 2026-05-27). Until that GA lands, the most-recent *stable* revision is
- * `2025-11-25` (same source, "Most Recent Stable Version").
+ * The current MCP protocol revision is `2026-07-28` (official versioning
+ * page, checked 2026-10-30), which removes `initialize`/`initialized`,
+ * protocol-level sessions and `Mcp-Session-Id` in its stateless core.
+ * The `2025-11-25` value below remains hatch3r's legacy advisory default
+ * pending verified client/server compatibility; it must not be described
+ * as the current MCP specification. See
+ * https://modelcontextprotocol.io/specification/versioning.
  *
  * D9-9 (Cycle 11 Wave 3, D9, P3): this string is emitted as an ADVISORY marker,
  * NOT a field the Claude Code MCP loader consumes. The documented `.mcp.json`
- * top-level schema is `mcpServers` only — protocol-version negotiation happens
- * per-server at `initialize` time, and no top-level `protocolVersion` key is
- * listed (code.claude.com/docs/en/mcp, accessed 2026-06-09). So emitting it does
- * not change the client/server handshake; it is a human-/tooling-readable record
- * of the revision the operator targets and the override seam
- * (`.hatch3r/hatch.json::mcp.protocolVersion`) for staging the RC ahead of GA.
+ * top-level schema is `mcpServers` only, and no top-level
+ * `protocolVersion` key is listed (code.claude.com/docs/en/mcp, accessed
+ * 2026-06-09). Protocol-version handling depends on the actual client and
+ * server: legacy revisions use `initialize`, while `2026-07-28` declares
+ * its version in each request. Emitting this marker does not change that
+ * negotiation; it is a human-/tooling-readable record of the revision the
+ * operator targets, with an override seam at
+ * `.hatch3r/hatch.json::mcp.protocolVersion` for compatibility testing.
  * It is retained rather than dropped because the Claude emission path also does
  * the per-server `_timeout`→`timeout` translation (a documented, loader-consumed
  * field per the same source) and the override seam is the forward-pin staging
